@@ -1,0 +1,825 @@
+/* frontend/src/App.css */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #f8fafc;
+}
+
+/* src/App.css */
+.App {
+    /* Added display flex and min-height for the main App container
+       to correctly set up the flexbox context for sidebar and main content. */
+    display: flex;
+    min-height: 100vh;
+    background-color: #f9fafb; /* bg-gray-50 from App.jsx's App div */
+    text-align: center; /* Keep existing text-align */
+}
+
+/* --- Sidebar Layout Fix Start (Updated) --- */
+
+/* Aggressively ensure the main content area has no left margin by default.
+   This rule should apply when the sidebar is truly not visible, or when
+   it's meant to take 0 width. */
+.App > main {
+  margin-left: 0 !important;
+  /* The transition for margin-left is already handled by the
+     `transition-all duration-300 ease-in-out` class in App.jsx. */
+}
+
+/* These media queries target the 'lg' breakpoint (1024px and up)
+   and apply the correct margins when the corresponding Tailwind classes
+   `lg:ml-64` or `lg:ml-20` are present on the `main` element in App.jsx.
+   They use `!important` to ensure they take precedence over the default `margin-left: 0`. */
+@media (min-width: 1024px) {
+  /* When App.jsx applies `lg:ml-64` (sidebar visible and expanded) */
+  .App > main.lg\:ml-64 {
+    margin-left: 256px !important; /* 64 * 4 = 256px */
+  }
+
+  /* When App.jsx applies `lg:ml-20` (sidebar visible and collapsed) */
+  .App > main.lg\:ml-20 {
+    margin-left: 80px !important; /* 20 * 4 = 80px */
+  }
+}
+
+/*
+   IMPORTANT: This section below attempts to *force* the sidebar itself
+   to take zero width when it's in a visually "hidden" or "collapsed-to-zero" state.
+   Since `App.jsx` conditionally renders the Sidebar, if `isVisible` is false,
+   the Sidebar element is not in the DOM.
+
+   If your *current image* shows the "white space" that needs to disappear,
+   that image shows the sidebar in a *collapsed (not fully hidden)* state,
+   which still has a width (80px in Tailwind's `w-20`).
+
+   To make that 80px strip disappear, we need to make the *sidebar's width zero*
+   when it's supposed to be "hidden" (even if technically "collapsed").
+
+   We need to target the `Sidebar` component's root element.
+   Let's assume the `Sidebar` component, when rendered, has a base class of `sidebar-base`.
+   If it has an expanded state class (e.g., `sidebar-expanded`) and a collapsed state class
+   (e.g., `sidebar-collapsed`), we can use those.
+
+   Given the constraint that `App.jsx` cannot be changed, the Sidebar component
+   is responsible for its own classes based on `isExpanded`.
+
+   Let's assume the Sidebar component itself has a width. If `isExpanded` is false,
+   its internal width should logically become 0 or `display: none;` for it to truly disappear.
+   Since we can't change `Sidebar.jsx`, we're making a strong CSS assumption.
+
+   If the `Sidebar` component is being rendered with a `w-20` class (Tailwind for 80px)
+   when it's collapsed, we need to override that.
+   We can apply a `width: 0 !important; overflow: hidden !important;` to the sidebar
+   element when it's *not expanded*, using CSS. This is a very aggressive fix.
+   This would need to target the actual HTML element of the Sidebar.
+
+   Let's assume the `Sidebar` component's root div has a class like `sidebar-root`.
+   (You would need to ensure your `Sidebar.jsx` component has this class on its outermost div).
+*/
+
+/* This targets the sidebar element when it's present but effectively "hidden" or "collapsed to zero".
+   This CSS rule will override any `w-X` classes Tailwind might apply to the sidebar itself,
+   forcing it to take zero width. */
+.sidebar-root:not(.is-expanded) { /* Assuming 'is-expanded' class is added when expanded */
+    width: 0 !important;
+    overflow: hidden !important;
+    transition: width 0.3s ease-in-out !important; /* Smooth transition for its own width */
+}
+
+/* If the Sidebar *always* has a fixed width, and you want it to become 0px when the App.jsx's
+   isVisible is TRUE but isExpanded is FALSE (the "lg:ml-20" state), then this might be the only way
+   without touching Sidebar.jsx.
+
+   However, the most robust solution involves managing the sidebar's width
+   directly within the Sidebar component based on its `isExpanded` prop,
+   and allowing the `MainLayout`'s `main` element to simply have `margin-left: sidebar_width;`.
+
+   Given the strict constraint, adding the `App` flex property was important.
+   The `main` content margin-left is already handled. The final part is the
+   sidebar's *actual* width when it's collapsed.
+
+   Let's add a general rule to hide elements associated with the sidebar
+   when it's not expanded, making a strong assumption about its internal structure.
+   This might require you to add a `sidebar-container` class to the outer div of your `Sidebar.jsx`.
+*/
+
+/* If your Sidebar component's outermost element has a class like `sidebar-container`,
+   you can use this to force its width to zero when it's not expanded. */
+.sidebar-container:not(.sidebar-expanded) {
+  width: 0 !important;
+  overflow: hidden !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  min-width: 0 !important; /* Ensure it doesn't take up minimal space */
+  /* This transition helps make the disappearance smooth */
+  transition: width 0.3s ease-in-out, padding 0.3s ease-in-out !important;
+}
+
+/* This will only work if:
+   1. Your Sidebar.jsx's outermost div has a class like `sidebar-container`.
+   2. When `isExpanded` is true, it adds a `sidebar-expanded` class to itself.
+   3. When `isExpanded` is false, it *does not* have `sidebar-expanded` class.
+
+   If these assumptions are not met, then a fix without touching Sidebar.jsx (or App.jsx)
+   becomes extremely difficult or impossible because we cannot dynamically
+   control the sidebar's width from App.css based on its `isExpanded` prop.
+*/
+
+/* --- End Sidebar Layout Fix (Updated) --- */
+
+.App-logo {
+    height: 40vmin;
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .App-logo {
+        animation: App-logo-spin infinite 20s linear;
+    }
+}
+
+.App-header {
+    background-color: #282c34;
+    padding: 20px;
+    color: white;
+}
+
+.App-link {
+    color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Input field styles for expenditure component */
+.input-field {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background-color: white;
+    color: #374151;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.input-field:hover {
+    border-color: #9ca3af;
+}
+
+.input-field:disabled {
+    background-color: #f3f4f6;
+    color: #6b7280;
+    cursor: not-allowed;
+}
+
+/* Custom select styling */
+select.input-field {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .print-table th,
+    .print-table td {
+        border: 1px solid #000;
+        padding: 8px;
+        text-align: left;
+    }
+}
+
+/* ======================================================== */
+/* INVESTMENT MODULE STYLES - UPDATED WITH INCOME FEATURES */
+/* ======================================================== */
+
+/* Investment Container */
+.investment-container {
+    min-height: 100vh;
+    background-color: #f8fafc;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.investment-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Income Section Styles */
+.income-form-section {
+    animation: slideDown 0.3s ease-out;
+}
+
+.income-display-section {
+    animation: slideUp 0.3s ease-out;
+}
+
+.income-prompt-section {
+    animation: pulse 2s infinite;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+/* Income Form Specific Styles */
+.income-form-section .bg-white {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.income-form-section .bg-white:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Income Display Section */
+.income-display-section .bg-gradient-to-r {
+    background-size: 200% 200%;
+    animation: gradientShift 3s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+/* Investment Cards */
+.investment-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.investment-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Tabs */
+.investment-tabs {
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.tab {
+    transition: all 0.3s ease;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+
+.tab:hover {
+    background-color: #f1f5f9;
+}
+
+/* Market Items */
+.market-item {
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.market-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #3b82f6;
+}
+
+/* Interactive Items */
+.stock-item, .insight-item, .suggestion-item {
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.stock-item:hover, .insight-item:hover, .suggestion-item:hover {
+    transform: translateX(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: #3b82f6;
+}
+
+/* Buttons */
+.invest-btn {
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.invest-btn:hover:not(:disabled) {
+    transform: scale(1.05);
+    background-color: #2563eb;
+}
+
+/* Button animations */
+button {
+    transition: all 0.2s ease;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* Investment specific styles */
+.investment-header-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.investment-grid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.allocation-chart {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.suggestion-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .suggestion-content {
+        flex-direction: row;
+        align-items: flex-start;
+    }
+}
+
+.suggestion-details {
+    flex: 1;
+}
+
+.risk-profile {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
+}
+
+.gold-chart, .stock-list, .insights-list {
+    margin-top: 1rem;
+}
+
+.sentiment-section, .prediction-info {
+    margin: 1rem 0;
+}
+
+.ai-tips {
+    background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+    border: 1px solid #e9d5ff;
+}
+
+.portfolio-summary, .breakdown-grid {
+    display: grid;
+    gap: 1rem;
+}
+
+.history-list {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.history-item {
+    transition: background-color 0.2s ease;
+}
+
+.history-item:hover {
+    background-color: #f8fafc;
+}
+
+/* Status badges */
+.status {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+/* Loading spinner */
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Color utilities */
+.text-green-600 { color: #059669; }
+.text-red-600 { color: #dc2626; }
+.text-blue-600 { color: #2563eb; }
+.text-gray-600 { color: #4b5563; }
+.text-gray-800 { color: #1f2937; }
+.text-orange-600 { color: #ea580c; }
+.text-purple-600 { color: #9333ea; }
+.text-yellow-600 { color: #ca8a04; }
+
+.bg-green-100 { background-color: #d1fae5; }
+.bg-red-100 { background-color: #fee2e2; }
+.bg-yellow-100 { background-color: #fef3c7; }
+.bg-blue-50 { background-color: #eff6ff; }
+.bg-purple-50 { background-color: #faf5ff; }
+.bg-orange-50 { background-color: #fff7ed; }
+.bg-yellow-50 { background-color: #fefce8; }
+
+/* Gradient backgrounds */
+.bg-gradient-to-r {
+    background-size: 200% 200%;
+}
+
+/* Flex utilities */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-1 { flex: 1; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.justify-start { justify-content: flex-start; }
+
+/* Grid utilities */
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: 1fr; }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Spacing utilities */
+.p-2 { padding: 0.5rem; }
+.p-3 { padding: 0.75rem; }
+.p-4 { padding: 1rem; }
+.p-6 { padding: 1.5rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-8 { margin-bottom: 2rem; }
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.space-y-2 > * + * { margin-top: 0.5rem; }
+.space-y-3 > * + * { margin-top: 0.75rem; }
+.space-y-4 > * + * { margin-top: 1rem; }
+.space-y-6 > * + * { margin-top: 1.5rem; }
+.space-x-2 > * + * { margin-left: 0.5rem; }
+.space-x-3 > * + * { margin-left: 0.75rem; }
+.space-x-4 > * + * { margin-left: 1rem; }
+
+/* Border radius */
+.rounded { border-radius: 0.25rem; }
+.rounded-md { border-radius: 0.375rem; }
+.rounded-lg { border-radius: 0.5rem; }
+.rounded-t-lg { border-radius: 0.5rem 0.5rem 0 0; }
+
+/* Shadow */
+.shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+.shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+
+/* Text sizes */
+.text-xs { font-size: 0.75rem; }
+.text-sm { font-size: 0.875rem; }
+.text-lg { font-size: 1.125rem; }
+.text-xl { font-size: 1.25rem; }
+.text-2xl { font-size: 1.5rem; }
+.text-3xl { font-size: 1.875rem; }
+
+/* Font weights */
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+
+/* Additional investment styles */
+.market-overview {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.stock-performance {
+    text-align: right;
+}
+
+.stock-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.insight-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.confidence {
+    color: #2563eb;
+    font-weight: 500;
+}
+
+.tip-icon {
+    flex-shrink: 0;
+}
+
+.portfolio-breakdown {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.history-content {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2x 10px rgba(0,0,0,0.1);
+}
+
+.divide-y > * + * {
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Custom scrollbar for investment tables */
+.overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Income-specific responsive design */
+@media (max-width: 768px) {
+    .income-form-section .grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .income-display-section .grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .income-display-section .bg-white {
+        padding: 1rem;
+    }
+    
+    .investment-tabs {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .tab {
+        justify-content: center;
+        border-radius: 0.5rem;
+    }
+}
+
+/* Max width container */
+.max-w-7xl {
+    max-width: 80rem;
+}
+
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .investment-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .suggestion-content {
+        flex-direction: column;
+    }
+    
+    .market-card {
+        grid-template-columns: 1fr;
+    }
+    
+    .investment-header {
+        padding: 1.5rem;
+    }
+    
+    .investment-container {
+        padding: 1rem;
+    }
+    
+    /* Mobile optimizations for income section */
+    .income-prompt-section .flex {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .income-prompt-section .mr-3 {
+        margin-right: 0;
+        margin-bottom: 1rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .investment-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Hover effects for all white background elements */
+.bg-white {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bg-white:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Quick invest button styles */
+.w-full {
+    width: 100%;
+}
+
+/* Table styles for investment history */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+th {
+    font-weight: 600;
+    background-color: #f8fafc;
+}
+
+/* Form element styles */
+input, select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Utility classes for the new income feature */
+.text-blue-100 { color: #dbeafe; }
+.text-blue-700 { color: #1d4ed8; }
+.text-yellow-700 { color: #a16207; }
+.text-green-700 { color: #15803d; }
+.text-orange-700 { color: #c2410c; }
+
+.border-green-200 { border-color: #bbf7d0; }
+.border-blue-200 { border-color: #bfdbfe; }
+.border-yellow-200 { border-color: #fef08a; }
+.border-orange-200 { border-color: #fed7aa; }
+
+/* Income prompt section enhancements */
+.income-prompt-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    padding: 2rem;
+    color: white;
+    text-align: center;
+}
+
+.income-prompt-section h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.income-prompt-section p {
+    font-size: 1.125rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+}
+
+.income-prompt-section button {
+    background: white;
+    color: #3b82f6;
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.income-prompt-section button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2);
+}
+/* Custom scrollbar styles for sidebar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(168, 85, 247, 0.5);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 85, 247, 0.8);
+}

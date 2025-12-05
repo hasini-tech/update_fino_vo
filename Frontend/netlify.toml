@@ -1,0 +1,21 @@
+[build]
+  command = "npm run build"
+  publish = "build"
+  functions = "netlify/functions"
+  
+[build.environment]
+  NODE_VERSION = "18"
+  CI = "false"
+
+# API redirect - MUST come before the catch-all
+[[redirects]]
+  from = "/api/*"
+  to = "https://finance-backend-1-d5p9.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+# Catch-all redirect for SPA routing - MUST come last
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

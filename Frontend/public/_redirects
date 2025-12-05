@@ -1,0 +1,6 @@
+
+# Netlify redirects file
+# This tells Netlify to serve index.html for all routes that don't match static files
+# This is necessary for client-side routing with React Router
+
+/*    /index.html   200
