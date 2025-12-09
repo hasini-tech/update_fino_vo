@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional: Make calendar smaller */
+.react-calendar {
+  width: 100% !important;
+  max-width: 250px;
+  font-size: 14px;
+  padding: 5px;
+}
